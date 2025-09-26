@@ -17,7 +17,7 @@
       ansible.builtin.reboot:
         reboot_timeout: 600 # Wait up to 10 minutes
         connect_timeout: 30
-        post_reboot_delay: 30
+        post_reboot_delay: 60
 
     - name: Check that pi-hole is running
       ansible.builtin.command: sudo pihole status
