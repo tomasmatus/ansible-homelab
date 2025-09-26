@@ -1,0 +1,6 @@
+pihole:
+  hosts:
+    pihole.home:
+      ansible_user: admintom
+    rpi-pihole.home:
+      ansible_user: admintom
