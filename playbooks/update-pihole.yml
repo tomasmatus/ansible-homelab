@@ -1,0 +1,53 @@
+---
+# Description: Perform a full system update on Debian 13 machine,
+#              then reboot the machine and wait for it to become available.
+#              When the machine is back ip update pi-hole and reboot again.
+
+- name: Update server with pi-hole
+  hosts: pihole
+  become: true
+
+  tasks:
+    - name: Ensure all packages are up to date and cache is updated
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: dist # Performs a 'dist-upgrade' which handles dependency changes gracefully
+        cache_valid_time: 3600
+
+    - name: Check if a reboot is required (Debian specific)
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+
+    - name: Reboot the server if required and wait for it to return
+      ansible.builtin.reboot:
+        reboot_timeout: 600 # Wait up to 10 minutes
+        connect_timeout: 30
+        post_reboot_delay: 30
+      when: reboot_required_file.stat.exists # Only reboot if required
+
+    - name: Update pi-hole
+      ansible.builtin.command: sudo pihole status
+      register: pihole_result
+
+    - name: "Show output of pi-hole update command"
+      ansible.builtin.debug:
+        msg: "{{ pihole_result.stdout }}"
+
+    - name: Reboot the server after all updates have finished
+      ansible.builtin.reboot:
+        reboot_timeout: 600 # Wait up to 10 minutes
+        connect_timeout: 30
+        post_reboot_delay: 30
+
+    - name: Check that pi-hole is running after reboot
+      ansible.builtin.command: sudo pihole status
+      register: pihole_result
+
+    - name: "Show output of pihole command"
+      ansible.builtin.debug:
+        msg: "{{ pihole_result.stdout }}"
+
+    - name: Show message when complete
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} has been successfully updated and rebooted."
