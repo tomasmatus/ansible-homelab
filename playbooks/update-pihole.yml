@@ -1,30 +1,61 @@
 ---
-# Description: Perform a full system update on Debian 13 machine,
-#              then reboot the machine and wait for it to become available.
-#              When the machine is back ip update pi-hole and reboot again.
+# Description: Perform a full system update on Debian machine,
+#              after the machine reboots update pi-hole.
 
 - name: Update server with pi-hole
   hosts: pihole
   become: true
 
   tasks:
-    - name: Ensure all packages are up to date and cache is updated
+    - name: Update packages
       ansible.builtin.apt:
         update_cache: yes
         upgrade: dist # Performs a 'dist-upgrade' which handles dependency changes gracefully
         cache_valid_time: 3600
 
-    - name: Reboot the server if required
+    - name: Reboot the server after update
       ansible.builtin.reboot:
         reboot_timeout: 600 # Wait up to 10 minutes
         connect_timeout: 30
         post_reboot_delay: 30
 
-    - name: Update pi-hole
+    - name: Check that pi-hole is running
       ansible.builtin.command: sudo pihole status
       register: pihole_result
 
-    - name: "Show output of pi-hole update command"
+    - name: Show output of pi-hole status
+      ansible.builtin.debug:
+        msg: "{{ pihole_result.stdout }}"
+
+    - name: Show pi-hole version before update
+      ansible.builtin.command: sudo pihole version
+      register: pihole_result
+
+    - name: Show output of pihole version
+      ansible.builtin.debug:
+        msg: "{{ pihole_result.stdout }}"
+
+    - name: Update pi-hole
+      ansible.builtin.command: sudo pihole -up -g
+      register: pihole_result
+
+    - name: Show output of pi-hole update command
+      ansible.builtin.debug:
+        msg: "{{ pihole_result.stdout }}"
+
+    - name: Check that pi-hole is running after the update
+      ansible.builtin.command: sudo pihole status
+      register: pihole_result
+
+    - name: Show output of pihole status
+      ansible.builtin.debug:
+        msg: "{{ pihole_result.stdout }}"
+
+    - name: Show pi-hole version after update
+      ansible.builtin.command: sudo pihole version
+      register: pihole_result
+
+    - name: Show output of pihole version
       ansible.builtin.debug:
         msg: "{{ pihole_result.stdout }}"
 
