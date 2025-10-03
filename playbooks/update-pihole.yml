@@ -4,6 +4,7 @@
 
 - name: Update server with pi-hole
   hosts: pihole
+  serial: 1
   become: true
 
   tasks:
