@@ -4,3 +4,8 @@ pihole:
       ansible_user: admintom
     rpi-pihole.home:
       ansible_user: admintom
+pikvm:
+  hosts:
+    pikvm.home:
+      ansible_user: root
+      ansible_remote_tmp: /tmp/ansible

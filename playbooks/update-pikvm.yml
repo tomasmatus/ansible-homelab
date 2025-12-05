@@ -1,0 +1,21 @@
+---
+# Description: Perform a full system update of PiKVM.
+
+- name: Update PiKVM
+  hosts: pikvm
+  become: true
+
+  tasks:
+    - name: Run PiKVM update
+      ansible.builtin.command: pikvm-update --no-reboot
+      register: update_result
+
+    - name: Reboot the server after update
+      ansible.builtin.reboot:
+        reboot_timeout: 600 # Wait up to 10 minutes
+        connect_timeout: 30
+        post_reboot_delay: 60
+
+    - name: Show message when complete
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} has been successfully updated and rebooted."
