@@ -42,11 +42,10 @@
         key: "{{ lookup('file', ansible_ssh_pubkey_path) }}"
 
     - name: Configure passwordless sudo for Ansible user
-      ansible.builtin.copy:
+      ansible.builtin.template:
+        src: templates/ansible-sudoer.j2
         dest: "/etc/sudoers.d/90-{{ ansible_service_user }}"
         owner: root
         group: root
         mode: "0440"
         validate: "visudo -cf %s"
-        content: |
-          {{ ansible_service_user }} ALL=(ALL) NOPASSWD: ALL
