@@ -1,0 +1,52 @@
+---
+- name: Bootstrap dedicated Ansible automation user
+  hosts: all
+  become: true
+
+  vars:
+    ansible_service_user: ansible
+    ansible_service_group: ansible
+    ansible_service_uid_gid: 955
+    ansible_service_shell: /bin/bash
+    ansible_ssh_pubkey_path: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519_ansible.pub"
+
+  tasks:
+    - name: Ensure automation group exists
+      ansible.builtin.group:
+        name: "{{ ansible_service_group }}"
+        gid: "{{ ansible_service_uid_gid }}"
+        state: present
+
+    - name: Create dedicated Ansible user with locked password
+      ansible.builtin.user:
+        name: "{{ ansible_service_user }}"
+        group: "{{ ansible_service_group }}"
+        shell: "{{ ansible_service_shell }}"
+        uid: "{{ ansible_service_uid_gid }}"
+        password: "!"
+        create_home: true
+        state: present
+
+    - name: Ensure .ssh directory exists with strict permissions
+      ansible.builtin.file:
+        path: "/home/{{ ansible_service_user }}/.ssh"
+        state: directory
+        owner: "{{ ansible_service_user }}"
+        group: "{{ ansible_service_group }}"
+        mode: "0700"
+
+    - name: Add Ansible SSH public key to authorized_keys
+      ansible.posix.authorized_key:
+        user: "{{ ansible_service_user }}"
+        state: present
+        key: "{{ lookup('file', ansible_ssh_pubkey_path) }}"
+
+    - name: Configure passwordless sudo for Ansible user
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/90-{{ ansible_service_user }}"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+        content: |
+          {{ ansible_service_user }} ALL=(ALL) NOPASSWD: ALL
