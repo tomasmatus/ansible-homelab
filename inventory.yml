@@ -1,9 +1,11 @@
+all:
+  vars:
+    ansible_user: ansible
+    ansible_ssh_private_key_file: ~/.ssh/id_ed25519_ansible
 pihole:
   hosts:
     pihole.home:
-      ansible_user: admintom
     rpi-pihole.home:
-      ansible_user: admintom
 pikvm:
   hosts:
     pikvm.home:
